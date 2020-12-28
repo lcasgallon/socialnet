@@ -77,6 +77,8 @@ func BuscarPublicacoes(w http.ResponseWriter, r *http.Request) {
 		respostas.Erro(w, http.StatusInternalServerError, erro)
 		return
 	}
+	fmt.Println("UsuárioID", usuarioID)
+	fmt.Println("Tamanho", len(publicacoes))
 	respostas.JSON(w, http.StatusOK, publicacoes)
 }
 

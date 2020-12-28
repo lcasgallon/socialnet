@@ -76,7 +76,7 @@ func (repositorio Publicacoes) Buscar(usuarioID uint64) ([]modelos.Publicacao, e
 	defer linhas.Close()
 	var publicacoes []modelos.Publicacao
 
-	if linhas.Next() {
+	for linhas.Next() {
 		var publicacao modelos.Publicacao
 		if erro = linhas.Scan(
 			&publicacao.ID,
