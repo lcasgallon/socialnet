@@ -200,7 +200,6 @@ func SeguirUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
 	repositorio := repositorios.NovoRepositorioDeUsuarios(db)
 	if erro = repositorio.Seguir(usuarioID, seguidorID); erro != nil {
 		respostas.Erro(w, http.StatusInternalServerError, erro)

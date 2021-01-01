@@ -14,7 +14,7 @@ function fazerLogin(evento){
         dataType: "text"
     }).done(function(){
         window.location = "/home";
-    }).fail(function(xhr){
-        alert("Usuário ou senha inválidos - "+xhr.status);
+    }).fail(function(){
+        Swal.fire("Ops...","Usuário ou senha incorretos","error");
     })
 }
