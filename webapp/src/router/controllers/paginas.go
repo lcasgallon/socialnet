@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -170,4 +171,110 @@ func CarregarPerfilDoUsuarioLogado(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.ExecutarTemplate(w, "perfil.html", usuario)
 
+}
+
+//CarregarPaginaDeEdicaoDeUsuario carregar a página do perfil do usuário logado
+func CarregarPaginaDeEdicaoDeUsuario(w http.ResponseWriter, r *http.Request) {
+
+	cookie, _ := cookies.Ler(r)
+	usuarioID, _ := strconv.ParseUint(cookie["id"], 10, 64)
+
+	canal := make(chan modelos.Usuario)
+	go modelos.BuscarDadosDoUsuario(canal, usuarioID, r)
+	usuario := <-canal
+	if usuario.ID == 0 {
+		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: "Erro ao buscar o usuário"})
+		return
+	}
+	utils.ExecutarTemplate(w, "editar-usuario.html", usuario)
+
+}
+
+//EditarUsuario chama a API para editar um usuário
+func EditarUsuario(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	usuario, erro := json.Marshal(map[string]string{
+		"nome":  r.FormValue("nome"),
+		"nick":  r.FormValue("nick"),
+		"email": r.FormValue("email"),
+	})
+
+	if erro != nil {
+		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
+		return
+	}
+	utils.ExecutarTemplate(w, "editar-usuario.html", usuario)
+
+	cookie, _ := cookies.Ler(r)
+	usuarioID, _ := strconv.ParseUint(cookie["id"], 10, 64)
+
+	url := fmt.Sprintf("%s/usuarios/%d", config.APIURL, usuarioID)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodPut, url, bytes.NewBuffer(usuario))
+	if erro != nil {
+		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		respostas.TratarStatusCodeDeErro(w, response)
+		return
+	}
+
+	respostas.JSON(w, response.StatusCode, nil)
+}
+
+//CarregarPaginaDeAtualizacaoDeSenha carrega a página de atualização de senha
+func CarregarPaginaDeAtualizacaoDeSenha(w http.ResponseWriter, r *http.Request) {
+	utils.ExecutarTemplate(w, "atualizar-senha.html", nil)
+}
+
+//AtualizarSenha atualiza senha do usuário
+func AtualizarSenha(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	senhas, erro := json.Marshal(map[string]string{
+		"atual": r.FormValue("atual"),
+		"nova":  r.FormValue("nova"),
+	})
+	if erro != nil {
+		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
+		return
+	}
+	cookie, _ := cookies.Ler(r)
+	usuarioID, _ := strconv.ParseUint(cookie["id"], 10, 64)
+
+	url := fmt.Sprintf("%s/usuarios/%d/atualizar-senha", config.APIURL, usuarioID)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodPost, url, bytes.NewBuffer(senhas))
+	if erro != nil {
+		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		respostas.TratarStatusCodeDeErro(w, response)
+		return
+	}
+
+	respostas.JSON(w, response.StatusCode, nil)
+}
+
+//DeletarUsuario chama a API para deletar um usuário
+func DeletarUsuario(w http.ResponseWriter, r *http.Request) {
+	cookie, _ := cookies.Ler(r)
+	usuarioID, _ := strconv.ParseUint(cookie["id"], 10, 64)
+	url := fmt.Sprintf("%s/usuarios/%d", config.APIURL, usuarioID)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodDelete, url, nil)
+	if erro != nil {
+		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode >= 400 {
+		respostas.TratarStatusCodeDeErro(w, response)
+		return
+	}
+
+	respostas.JSON(w, response.StatusCode, nil)
 }

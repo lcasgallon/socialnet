@@ -124,7 +124,7 @@ func AtualizarPublicacao(w http.ResponseWriter, r *http.Request) {
 	respostas.JSON(w, response.StatusCode, nil)
 }
 
-//AtualizarPublicacao chama a API para atualizar uma publicação
+//DeletarPublicacao chama a API para atualizar uma publicação
 func DeletarPublicacao(w http.ResponseWriter, r *http.Request) {
 	parametros := mux.Vars(r)
 	publicacaoID, erro := strconv.ParseUint(parametros["publicacaoId"], 10, 64)
